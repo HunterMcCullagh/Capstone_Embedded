@@ -1,12 +1,17 @@
 #include <stdio.h>
 #include <driver/i2c.h>
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 #define I2C_MASTER_NUM I2C_NUM_0        // I2C port number
 #define I2C_MASTER_SCL_IO 19           // GPIO for SCL
 #define I2C_MASTER_SDA_IO 18           // GPIO for SDA
 #define I2C_MASTER_FREQ_HZ 100000      // Frequency in Hz (100 kHz standard)
 #define I2C_MASTER_TX_BUF_DISABLE 0    // Disable transmit buffer
 #define I2C_MASTER_RX_BUF_DISABLE 0    // Disable receive buffer
+
+
 
 // Function to initialize the I2C driver
 void i2c_master_init() {
@@ -27,10 +32,10 @@ void i2c_master_init() {
 // Function to scan for I2C peripherals
 void i2c_scan() {
     printf("Scanning for I2C devices...\n");
-    for (uint8_t addr = 1; addr < 127; addr++) {
+    for (uint8_t addr = 1; addr < 10; addr++) {
         i2c_cmd_handle_t cmd = i2c_cmd_link_create();
         i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_write_byte(cmd, (addr << 1) | 0x50, true);
         i2c_master_stop(cmd);
 
         esp_err_t ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdMS_TO_TICKS(100));
@@ -89,7 +94,18 @@ void i2c_dump_registers(uint8_t device_addr) {
 void app_main(void)
 {
     i2c_master_init();  // Initialize I2C driver
-    i2c_scan();         // Scan for I2C devices
+    uint8_t i2c_address = 0x30;
+    uint8_t i2c_register = 0x00;
+    uint8_t i2c_data = 0x2F;
+
+    while(1)
+    {
+        i2c_scan();         // Scan for I2C devices
+        //i2c_write_register(i2c_address,i2c_register,i2c_data);
+        //printf("Register write completed.\n");
+        vTaskDelay(pdMS_TO_TICKS(4000)); // Delay for 1000 ms (1 second)
+    }
+
 
     // uint8_t device_addr = 0x68; // Example device address (adjust as needed)
     // uint8_t reg_addr = 0x6B;    // Example register address (adjust as needed)
@@ -114,5 +130,6 @@ void app_main(void)
     // }
 
     // // Dump all registers
-    i2c_dump_registers(0x3C);
+    //i2c_dump_registers(0x3C);
+    
 }
